@@ -32,13 +32,10 @@ Thumbs.db
 # Streamlit
 .streamlit/
 
-# Data files (optional - comment out if you want to track data)
+# Data files - keep essential folders for data loading
+# Only exclude large binary files and temporary data
 *.csv
-*.json
-*.xml
-XML_files/
-XML_files_processed/
-json_files/
+*.log
 
 # Jupyter notebooks
 .ipynb_checkpoints/
