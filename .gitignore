@@ -29,8 +29,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Streamlit
-.streamlit/
+# Streamlit - exclude secrets but allow config
+.streamlit/secrets.toml
+!.streamlit/config.yaml
 
 # Data files - keep essential folders for data loading
 # Only exclude large binary files and temporary data
