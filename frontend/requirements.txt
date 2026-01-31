@@ -1,0 +1,8 @@
+streamlit
+streamlit-authenticator
+itables
+requests # To call your FastAPI
+pandas
+plotly
+altair
+pyyaml
