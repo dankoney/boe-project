@@ -1,8 +1,8 @@
-
 import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
+import os
 
 st.set_page_config(
     page_title="BOE Stats App",
@@ -13,7 +13,11 @@ st.set_page_config(
 # 1. Load Authentication Configuration
 # NOTE: In a real enterprise app, replace this YAML with a PostgreSQL query
 # to a 'users' table.
-with open('./.streamlit/config.yaml') as file:
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(script_dir, '.streamlit', 'config.yaml')
+
+with open(config_path) as file:
     config = yaml.load(file, Loader=SafeLoader)
 
 authenticator = stauth.Authenticate(
