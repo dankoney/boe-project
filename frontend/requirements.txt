@@ -6,3 +6,5 @@ pandas
 plotly
 altair
 pyyaml
+uvicorn[standard]
+fastapi
