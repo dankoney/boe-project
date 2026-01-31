@@ -8,3 +8,4 @@ altair
 pyyaml
 uvicorn[standard]
 fastapi
+psycopg2-binary
