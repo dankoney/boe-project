@@ -37,6 +37,9 @@ Thumbs.db
 *.csv
 *.log
 
+# Large XML files (over 100MB) - use Git LFS if needed
+*.xml
+
 # Jupyter notebooks
 .ipynb_checkpoints/
 
