@@ -48,3 +48,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Incomplete pages - exclude from deployment
+frontend/pages/1_*
+frontend/pages/2_*
+frontend/pages/3_*
