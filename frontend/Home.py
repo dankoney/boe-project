@@ -5,7 +5,7 @@ from yaml.loader import SafeLoader
 import os
 
 st.set_page_config(
-    page_title="BOE Stats App",
+    page_title="Demurrage Analysis Application",
     page_icon="📊",
     layout="wide"  # Use wide layout for enterprise feel
 )
@@ -46,9 +46,17 @@ if authentication_status:
     # trying to render its own button inside the method.
     st.sidebar.button("Logout", on_click=lambda: authenticator.logout(location='unrendered'), key='logout_button')
     
-    st.title("📊 BOE Customs Statistics Portal")
-    st.markdown("Use the sidebar navigation to access the statistical dashboards.")
-
+    # Add organization logo and centered content
+    col1, col2, col3 = st.columns([1.4, 1.2, 1])
+    with col2:
+        st.image("https://shippers.org.gh/wp-content/uploads/2021/09/gsaLogo400x400.png", 
+                 width=150)
+    
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>Demurrage Analytics Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-style: italic; font-size: 16px;'>Track and analyze container demurrage charges and port operations.</p>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+    
 elif authentication_status is False:
     # FAILURE
     st.error('Username/password is incorrect')

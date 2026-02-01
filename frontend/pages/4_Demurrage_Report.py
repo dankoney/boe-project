@@ -25,6 +25,27 @@ IMPORTER_SUGGEST_ENDPOINT = "http://127.0.0.1:8000/suggestions/importer"
 # Configuration
 FASTAPI_DEMURRAGE_ENDPOINT = "http://127.0.0.1:8000/reports/demurrage"
 
+# Vibrant color scheme for charts (works well in both light and dark modes)
+VIBRANT_COLORS = [
+'#1E3A8A', # Dark Blue (primary org color)
+'#FFD700', # Gold (secondary org color)
+'#FF6B6B', # Light Red (accent org color)
+'#2563EB', # Blue (variant of dark blue)
+'#F59E0B', # Amber (variant of gold)
+'#EF4444', # Red (variant of light red)
+'#3B82F6', # Blue Light
+'#FCD34D', # Yellow Light
+'#DC2626', # Red Dark
+'#1D4ED8'  # Blue Dark
+]
+
+# Line chart colors
+LINE_COLORS = {
+    'secondary': '#FFD700',  # Gold for secondary metric
+    'tertiary': '#FF6B6B',  # Light Red for tertiary metric
+    'primary': '#FF6B6B'  # Coral Red for primary metric
+}
+
 
 def collect_params(start_dt: datetime.datetime, end_dt: datetime.datetime) -> Dict[str, Any]:
     params: Dict[str, Any] = {
@@ -327,13 +348,13 @@ def inject_expander_css() -> None:
     css = """
     <style>
     .stExpander, .st-expander, .streamlit-expander {
-        border: 1px solid #e6eef8 !important;
-        background: #fbfdff !important;
+        border: 1px solid var(--secondary-background) !important;
+        background: var(--secondary-background) !important;
         border-radius: 8px !important;
         margin-bottom: 8px !important;
     }
     .streamlit-expanderHeader, .stExpander summary {
-        color: #0b66c3 !important;
+        color: var(--primary-color) !important;
     }
     </style>
     """
@@ -694,8 +715,8 @@ def demurrage_page():
                     grouped['date'] = pd.to_datetime(grouped['date'])
                     if not grouped.empty:
                         base = alt.Chart(grouped).encode(x=alt.X('date:T', title='Date'))
-                        line_dem = base.mark_line(stroke='#1f77b4', point=True).encode(y='total_value:Q')
-                        line_dur = base.mark_line(stroke='orange', point=True).encode(y='avg_duration:Q')
+                        line_dem = base.mark_line(stroke=LINE_COLORS['primary'], point=True, strokeWidth=3).encode(y='total_value:Q')
+                        line_dur = base.mark_line(stroke=LINE_COLORS['secondary'], point=True, strokeWidth=3).encode(y='avg_duration:Q')
                         chart = alt.layer(line_dem, line_dur).resolve_scale(y='independent')
                         safe_altair_chart(chart, height=320)
 
@@ -707,8 +728,8 @@ def demurrage_page():
                     ).reset_index()
                     if not grouped.empty:
                         base = alt.Chart(grouped).encode(x=alt.X('period:T', title='Month'))
-                        line_dem = base.mark_line(stroke='#1f77b4', point=True).encode(y='total_value:Q')
-                        line_dur = base.mark_line(stroke='orange', point=True).encode(y='avg_duration:Q')
+                        line_dem = base.mark_line(stroke=LINE_COLORS['primary'], point=True, strokeWidth=3).encode(y='total_value:Q')
+                        line_dur = base.mark_line(stroke=LINE_COLORS['secondary'], point=True, strokeWidth=3).encode(y='avg_duration:Q')
                         chart = alt.layer(line_dem, line_dur).resolve_scale(y='independent')
                         safe_altair_chart(chart, height=320)
 
@@ -720,8 +741,8 @@ def demurrage_page():
                     ).reset_index()
                     if not grouped.empty:
                         base = alt.Chart(grouped).encode(x=alt.X('period:T', title='Quarter'))
-                        line_dem = base.mark_line(stroke='#1f77b4', point=True).encode(y='total_value:Q')
-                        line_dur = base.mark_line(stroke='orange', point=True).encode(y='avg_duration:Q')
+                        line_dem = base.mark_line(stroke=LINE_COLORS['primary'], point=True, strokeWidth=3).encode(y='total_value:Q')
+                        line_dur = base.mark_line(stroke=LINE_COLORS['secondary'], point=True, strokeWidth=3).encode(y='avg_duration:Q')
                         chart = alt.layer(line_dem, line_dur).resolve_scale(y='independent')
                         safe_altair_chart(chart, height=320)
 
@@ -732,8 +753,8 @@ def demurrage_page():
                     ).reset_index(names='year')
                     if not grouped.empty:
                         base = alt.Chart(grouped).encode(x=alt.X('year:O', title='Year'))
-                        line_dem = base.mark_line(stroke='#1f77b4', point=True).encode(y='total_value:Q')
-                        line_dur = base.mark_line(stroke='orange', point=True).encode(y='avg_duration:Q')
+                        line_dem = base.mark_line(stroke=LINE_COLORS['primary'], point=True, strokeWidth=3).encode(y='total_value:Q')
+                        line_dur = base.mark_line(stroke=LINE_COLORS['secondary'], point=True, strokeWidth=3).encode(y='avg_duration:Q')
                         chart = alt.layer(line_dem, line_dur).resolve_scale(y='independent')
                         safe_altair_chart(chart, height=320)
             
@@ -758,6 +779,7 @@ def demurrage_page():
                 chart = alt.Chart(dur_grp).mark_bar().encode(
                     x=alt.X('duration_bucket:N', title='Duration Bucket'),
                     y=alt.Y('total_value:Q', title='Total Demurrage (USD)'),
+                    color=alt.Color('duration_bucket:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                     tooltip=[alt.Tooltip('total_value', format=',.2f')]
                 )
                 safe_altair_chart(chart, height=280)
@@ -796,7 +818,7 @@ def demurrage_page():
             if not port_grp.empty:
                 chart = alt.Chart(port_grp).mark_arc(innerRadius=80).encode(
                     theta='total_value:Q',
-                    color=alt.Color('port_of_discharge:N'),
+                    color=alt.Color('port_of_discharge:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                     tooltip=[alt.Tooltip('total_value', format=',.2f')]
                 )
                 safe_altair_chart(chart, height=300)
@@ -828,6 +850,7 @@ def demurrage_page():
                 chart = alt.Chart(term_grp).mark_bar().encode(
                     x=alt.X('total_value:Q', title='Total Demurrage (USD)'),
                     y=alt.Y('terminal:N', sort='-x'),
+                    color=alt.Color('terminal:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                     tooltip=[alt.Tooltip('total_value', format=',.2f')]
                 )
                 safe_altair_chart(chart, height=320)
@@ -865,6 +888,7 @@ def demurrage_page():
                     chart = alt.Chart(imp_eff).mark_bar().encode(
                         x=alt.X('avg_value:Q', title='Avg Demurrage per BOE (USD)'),
                         y=alt.Y('importer_label:N', sort='-x'),
+                        color=alt.Color('importer_label:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                         tooltip=['importer_label', alt.Tooltip('avg_value', format=',.2f'), 'count']
                     )
                     safe_altair_chart(chart, height=350)
@@ -896,6 +920,7 @@ def demurrage_page():
                 chart = alt.Chart(sl_grp).mark_bar().encode(
                     x=alt.X('total_value:Q', title='Total Demurrage (USD)'),
                     y=alt.Y('shipping_line_name:N', sort='-x'),
+                    color=alt.Color('shipping_line_name:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                     tooltip=[alt.Tooltip('total_value', format=',.2f')]
                 )
                 safe_altair_chart(chart, height=300)
@@ -927,6 +952,7 @@ def demurrage_page():
                 chart = alt.Chart(hs_grp).mark_bar().encode(
                     x=alt.X('total_value:Q', title='Total Demurrage (USD)'),
                     y=alt.Y('hs4:N', sort='-x'),
+                    color=alt.Color('hs4:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                     tooltip=[alt.Tooltip('total_value', format=',.2f')]
                 )
                 safe_altair_chart(chart, height=300)
@@ -968,7 +994,7 @@ def demurrage_page():
                 if not pkg_grp.empty:
                     chart = alt.Chart(pkg_grp).mark_arc(innerRadius=80).encode(
                         theta='total_value:Q',
-                        color=alt.Color('package_type:N'),
+                        color=alt.Color('package_type:N', scale=alt.Scale(range=VIBRANT_COLORS)),
                         tooltip=[alt.Tooltip('total_value', format=',.2f')]
                     )
                     safe_altair_chart(chart, height=300)
