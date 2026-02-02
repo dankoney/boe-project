@@ -8,10 +8,17 @@ from psycopg2 import extras
 def get_db_connection():
     # --- Actual connection parameters ---
     conn = psycopg2.connect(
-        dbname="Declaration_db",
+        dbname="postgres",
         user="postgres",
-        password="Danlyn@2021",
-        host="localhost"
+        password="Danlyn2021",
+        host="declaration-db.ct8kgqkmy6bu.eu-north-1.rds.amazonaws.com",
+        port="5432"
+
+        #DB_NAME = "Declaration_db" 
+#DB_USER = "postgres"
+#DB_PASS = "Danlyn@2021" 
+#DB_HOST = "localhost"
+#DB_PORT = "5432"
     )
     return conn
 

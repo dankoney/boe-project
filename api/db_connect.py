@@ -2,12 +2,21 @@ import psycopg2
 from fastapi import HTTPException
 import sys
 
-# --- 1. Database Connection Details (Centralized Source) ---
-DB_NAME = "Declaration_db" 
+# --- 1. Database Connection Details (AWS) ---
+DB_NAME = "postgres" 
 DB_USER = "postgres"
-DB_PASS = "Danlyn@2021" 
-DB_HOST = "localhost"
+DB_PASS = "Danlyn2021" 
+DB_HOST = "declaration-db.ct8kgqkmy6bu.eu-north-1.rds.amazonaws.com"
 DB_PORT = "5432"
+
+
+# --- 1. Database Connection Details (Localhost) ---
+#DB_NAME = "Declaration_db" 
+#DB_USER = "postgres"
+#DB_PASS = "Danlyn@2021" 
+#DB_HOST = "localhost"
+#DB_PORT = "5432"
+
 
 def get_api_connection():
     """
