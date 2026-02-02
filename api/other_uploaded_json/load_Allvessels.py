@@ -10,7 +10,7 @@ def get_db_connection():
     conn = psycopg2.connect(
         dbname="postgres",
         user="postgres",
-        password="Danlyn2021",
+        password="dobte7-kaxgoq-xytZug",
         host="declaration-db.ct8kgqkmy6bu.eu-north-1.rds.amazonaws.com",
         port="5432"
 

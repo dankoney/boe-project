@@ -5,7 +5,7 @@ import sys
 # --- 1. Database Connection Details (AWS) ---
 DB_NAME = "postgres" 
 DB_USER = "postgres"
-DB_PASS = "Danlyn2021" 
+DB_PASS = "dobte7-kaxgoq-xytZug" 
 DB_HOST = "declaration-db.ct8kgqkmy6bu.eu-north-1.rds.amazonaws.com"
 DB_PORT = "5432"
 
