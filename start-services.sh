@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Start services with proper logging
-cd /home/ubuntu/boe-project
+cd /home/ubuntu/boe_project
 
 echo "Starting API Server..."
 # Set PYTHONPATH to include the api directory
-export PYTHONPATH=/home/ubuntu/boe-project/api:$PYTHONPATH
+export PYTHONPATH=/home/ubuntu/boe_project/api:$PYTHONPATH
 nohup /home/ubuntu/boe-project/new_venv/bin/python -m uvicorn api_server:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
 API_PID=$!
 echo "API Server started with PID: $API_PID"

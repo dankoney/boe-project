@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/ubuntu/boe-project
+cd /home/ubuntu/boe_project
 
 echo "Stopping services..."
 
