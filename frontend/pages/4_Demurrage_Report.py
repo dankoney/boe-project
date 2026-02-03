@@ -250,11 +250,20 @@ def render_records_table(records: list, apply_package_filter: bool = False):
     if not records:
         st.warning("No records returned for the selected criteria.")
         return
+    
+    # Check data size to prevent WebSocket errors
+    if len(records) > 10000:
+        st.warning(f"⚠️ Large dataset detected ({len(records):,} records). Showing first 10,000 records to prevent performance issues.")
+        records = records[:10000]
+    
     df = pd.DataFrame(records)
     
     # Apply package type filter if requested
     if apply_package_filter and not df.empty:
         df = apply_package_type_filter(df)
+    
+    # Optimize memory usage
+    df = df.copy()
     
     display_cols = [
         'boe_no', 'boe_approval_date', 'bl_number', 'importer_name', 'importer_tin',
@@ -262,15 +271,22 @@ def render_records_table(records: list, apply_package_filter: bool = False):
         'hs_code', 'shipping_line_name', 'package_type', 'duration_days', 'demurrage_usd', 'total_rent_ghc'
     ]
     cols = [c for c in display_cols if c in df.columns]
+    
     if cols:
-        st.dataframe(df[cols])
+        st.dataframe(df[cols], use_container_width=True, hide_index=True)
     else:
-        st.dataframe(df)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    
+    # Download button before memory cleanup
     try:
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(label='Download CSV', data=csv, file_name='demurrage_report.csv', mime='text/csv')
     except Exception:
         st.info('Download not available.')
+    
+    # Memory cleanup
+    del df
+    gc.collect()
 
 
 # ------------------ Data aggregation helpers ------------------
