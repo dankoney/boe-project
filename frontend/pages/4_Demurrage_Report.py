@@ -50,9 +50,13 @@ LINE_COLORS = {
 
 
 def collect_params(start_dt: datetime.datetime, end_dt: datetime.datetime) -> Dict[str, Any]:
+    # Get user-defined limit from session state or default
+    record_limit = st.session_state.get('record_limit', 10000)
+    
     params: Dict[str, Any] = {
         "start_date": str(start_dt.date()),
         "end_date": str(end_dt.date()),
+        "limit": record_limit  # User-configurable limit to prevent server crashes
     }
     # Optional filters
     boe_no = st.session_state.get('dem_boe_no', '').strip()
@@ -519,6 +523,20 @@ def demurrage_page():
 
         start_dt = datetime.datetime.combine(start_date, datetime.time.min)
         end_dt = datetime.datetime.combine(end_date, datetime.time.max)
+
+    # Performance settings
+    st.markdown("### ⚡ Performance Settings")
+    col_limit, col_info = st.columns([1, 2])
+    with col_limit:
+        record_limit = st.selectbox(
+            "Max Records to Retrieve",
+            options=[1000, 5000, 10000, 25000],
+            index=2,
+            help="Higher limits may cause server crashes. Start with 10,000."
+        )
+        st.session_state.record_limit = record_limit
+    with col_info:
+        st.info("💡 **Tip**: Start with 10,000 records. Increase only if needed for analysis.")
 
     # Search and Clear buttons
     col_search, col_clear = st.columns([1, 1])
