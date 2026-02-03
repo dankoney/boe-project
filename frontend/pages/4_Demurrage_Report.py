@@ -251,20 +251,55 @@ def render_records_table(records: list, apply_package_filter: bool = False):
         st.warning("No records returned for the selected criteria.")
         return
     
-    # Check data size to prevent WebSocket errors
-    if len(records) > 10000:
-        st.warning(f"⚠️ Large dataset detected ({len(records):,} records). Showing first 10,000 records to prevent performance issues.")
-        records = records[:10000]
+    total_records = len(records)
     
-    df = pd.DataFrame(records)
+    # For large datasets, use pagination
+    if total_records > 10000:
+        st.info(f"📊 Large dataset detected ({total_records:,} records). Use pagination to browse all data.")
+        
+        # Pagination settings
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            page_size = st.selectbox("Records per page", [100, 500, 1000, 5000], key="page_size")
+        with col2:
+            current_page = st.number_input("Page", min_value=1, value=st.session_state.get('current_page', 1), key="current_page_input")
+        
+        total_pages = (total_records + page_size - 1) // page_size
+        current_page = min(max(1, current_page), total_pages)
+        st.session_state.current_page = current_page
+        
+        # Navigation buttons
+        col_prev, col_info, col_next = st.columns([1, 2, 1])
+        with col_prev:
+            if st.button("⬅️ Previous", disabled=current_page == 1):
+                st.session_state.current_page = current_page - 1
+                st.rerun()
+        with col_info:
+            st.write(f"**Page {current_page} of {total_pages}**")
+        with col_next:
+            if st.button("Next ➡️", disabled=current_page >= total_pages):
+                st.session_state.current_page = current_page + 1
+                st.rerun()
+        
+        # Get current page data
+        start_idx = (current_page - 1) * page_size
+        end_idx = min(start_idx + page_size, total_records)
+        page_records = records[start_idx:end_idx]
+        
+        st.info(f"Showing records {start_idx + 1:,} to {end_idx:,} of {total_records:,}")
+        df = pd.DataFrame(page_records)
+    else:
+        # Small datasets - show all at once
+        df = pd.DataFrame(records)
     
     # Apply package type filter if requested
     if apply_package_filter and not df.empty:
         df = apply_package_type_filter(df)
     
-    # Optimize memory usage
+    # Optimize memory
     df = df.copy()
     
+    # Display columns
     display_cols = [
         'boe_no', 'boe_approval_date', 'bl_number', 'importer_name', 'importer_tin',
         'gate_out_confirmation_date', 'final_date_of_discharge', 'port_of_discharge', 'terminal',
@@ -272,17 +307,28 @@ def render_records_table(records: list, apply_package_filter: bool = False):
     ]
     cols = [c for c in display_cols if c in df.columns]
     
+    # Show data table
     if cols:
         st.dataframe(df[cols], use_container_width=True, hide_index=True)
     else:
         st.dataframe(df, use_container_width=True, hide_index=True)
     
-    # Download button before memory cleanup
-    try:
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(label='Download CSV', data=csv, file_name='demurrage_report.csv', mime='text/csv')
-    except Exception:
-        st.info('Download not available.')
+    # Download full dataset option
+    if total_records > 10000:
+        st.markdown("---")
+        st.subheader("📥 Download Full Dataset")
+        try:
+            full_df = pd.DataFrame(records)
+            csv = full_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label='Download Complete Dataset (CSV)',
+                data=csv,
+                file_name=f'demurrage_report_full_{total_records}_records.csv',
+                mime='text/csv'
+            )
+            del full_df
+        except Exception as e:
+            st.error(f'Download not available: {e}')
     
     # Memory cleanup
     del df
