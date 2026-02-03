@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/ubuntu/boe-project
+cd /home/ubuntu/boe_project
 
 echo "Stopping services..."
 
@@ -16,7 +16,7 @@ if [ -f api.pid ]; then
     rm api.pid
 else
     echo "API PID file not found, killing by process name"
-    pkill -f "uvicorn api.api_server:app"
+    pkill -f "uvicorn api_server:app"
 fi
 
 # Stop Streamlit Server
@@ -38,7 +38,7 @@ fi
 sleep 2
 
 # Force kill if still running
-pkill -9 -f "uvicorn api.api_server:app" 2>/dev/null
+pkill -9 -f "uvicorn api_server:app" 2>/dev/null
 pkill -9 -f "streamlit run frontend/Home.py" 2>/dev/null
 
 echo "All services stopped!"
