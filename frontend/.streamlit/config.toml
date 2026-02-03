@@ -15,8 +15,3 @@ gatherUsageStats = false
 
 [logger]
 level = "info"
-
-[client]
-caching = true
-displayEnabled = true
-showErrorDetails = true

@@ -4,7 +4,7 @@
 cd /home/ubuntu/boe-project
 
 echo "Starting API Server..."
-nohup /home/ubuntu/boe-project/new_venv/bin/python -m uvicorn api_server:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+nohup /home/ubuntu/boe-project/new_venv/bin/python -m uvicorn api.api_server:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
 API_PID=$!
 echo "API Server started with PID: $API_PID"
 
