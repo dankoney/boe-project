@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional
 import altair as alt
 import sys
 from pathlib import Path
+import gc
+import traceback
 
 # Optional: Hydralit Components for modern menus/buttons
 try:
@@ -18,12 +20,12 @@ except ImportError:
 # Apply modern admin theme
 
 # Suggestion endpoints
-HSCODE_SUGGEST_ENDPOINT = "http://127.0.0.1:8000/hscodes/suggestions"
-VESSEL_SUGGEST_ENDPOINT = "http://127.0.0.1:8000/suggestions/vessel"
-IMPORTER_SUGGEST_ENDPOINT = "http://127.0.0.1:8000/suggestions/importer"
+HSCODE_SUGGEST_ENDPOINT = "http://51.20.84.10:8000/hscodes/suggestions"
+VESSEL_SUGGEST_ENDPOINT = "http://51.20.84.10:8000/suggestions/vessel"
+IMPORTER_SUGGEST_ENDPOINT = "http://51.20.84.10:8000/suggestions/importer"
 
 # Configuration
-FASTAPI_DEMURRAGE_ENDPOINT = "http://127.0.0.1:8000/reports/demurrage"
+FASTAPI_DEMURRAGE_ENDPOINT = "http://51.20.84.10:8000/reports/demurrage"
 
 # Vibrant color scheme for charts (works well in both light and dark modes)
 VIBRANT_COLORS = [
@@ -94,11 +96,31 @@ def collect_params(start_dt: datetime.datetime, end_dt: datetime.datetime) -> Di
 
 def run_demurrage_search(params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     try:
-        resp = requests.get(FASTAPI_DEMURRAGE_ENDPOINT, params=params, timeout=500)
+        # Add memory cleanup before API call
+        gc.collect()
+        
+        st.info("🔍 Searching records... This may take a moment for large datasets.")
+        resp = requests.get(FASTAPI_DEMURRAGE_ENDPOINT, params=params, timeout=300)
         resp.raise_for_status()
-        return resp.json()
+        
+        result = resp.json()
+        
+        # Clean up memory after successful response
+        gc.collect()
+        
+        return result
+    except requests.exceptions.Timeout:
+        st.error("⏱️ Request timed out. Please try with a smaller date range or fewer filters.")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("🔌 Cannot connect to API server. Please check if the API is running.")
+        return None
     except requests.exceptions.RequestException as e:
-        st.error(f"API request failed: {e}")
+        st.error(f"❌ API request failed: {e}")
+        return None
+    except Exception as e:
+        st.error(f"💥 Unexpected error: {e}")
+        st.error("Please try refreshing the page or contact support.")
         return None
 
 
@@ -1380,8 +1402,15 @@ def demurrage_page():
 
 # Page access control
 if st.session_state.get('authentication_status'):
-    inject_expander_css()
-    demurrage_page()
+    try:
+        inject_expander_css()
+        demurrage_page()
+        # Memory cleanup at end of each page load
+        gc.collect()
+    except Exception as e:
+        st.error(f"💥 Page error: {e}")
+        st.error("Please refresh the page and try again.")
+        st.text(traceback.format_exc())
 else:
     st.error('Please log in on the Home page to access the reports.')
 
