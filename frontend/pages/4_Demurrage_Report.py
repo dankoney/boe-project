@@ -308,11 +308,26 @@ def render_modern_pagination(current_page: int, total_pages: int, page_size: int
             step=1
         )
     
-    # Modern pagination buttons
-    st.markdown('<div style="display: flex; justify-content: center; align-items: center; gap: 5px; margin: 20px 0;">', unsafe_allow_html=True)
+    # Calculate the total number of buttons needed
+    button_count = 2  # Previous + Next buttons
     
-    # Navigation buttons container
-    button_cols = st.columns([1] + [1] * (end_page - start_page + 1) + [1])
+    # Add first page button if not in range
+    if start_page > 1:
+        button_count += 1  # First page button
+        if start_page > 2:
+            button_count += 1  # Ellipsis
+    
+    # Add page range buttons
+    button_count += (end_page - start_page + 1)
+    
+    # Add last page button if not in range
+    if end_page < total_pages:
+        if end_page < total_pages - 1:
+            button_count += 1  # Ellipsis
+        button_count += 1  # Last page button
+    
+    # Create columns for pagination buttons
+    button_cols = st.columns([1] * button_count)
     
     col_idx = 0
     
@@ -363,8 +378,6 @@ def render_modern_pagination(current_page: int, total_pages: int, page_size: int
         if st.button("➡️", key="next_page", disabled=current_page >= total_pages, use_container_width=True):
             st.session_state.current_page = min(total_pages, current_page + 1)
             st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Quick navigation stats
     st.markdown(f"""
