@@ -99,11 +99,17 @@ def run_demurrage_search(params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Add memory cleanup before API call
         gc.collect()
         
-        st.info("🔍 Searching records... This may take a moment for large datasets.")
+        # Show searching message
+        search_placeholder = st.empty()
+        search_placeholder.info("🔍 Searching records... This may take a moment for large datasets.")
+        
         resp = requests.get(FASTAPI_DEMURRAGE_ENDPOINT, params=params, timeout=300)
         resp.raise_for_status()
         
         result = resp.json()
+        
+        # Clear searching message
+        search_placeholder.empty()
         
         # Clean up memory after successful response
         gc.collect()
@@ -661,10 +667,27 @@ def demurrage_page():
         with st.spinner('Querying demurrage data...'):
             result = run_demurrage_search(params)
         if result is None:
-            st.error('No data returned. Check the backend or filters.')
+            st.error('❌ Search failed. Please check your filters and try again.')
             return
-        st.session_state.summary = result.get('summary', {})
+        
+        # Check if search returned data
         records = result.get('records', [])
+        summary = result.get('summary', {})
+        
+        if not records:
+            st.warning('🔍 No records found matching your search criteria.')
+            st.info('💡 Try adjusting your filters:')
+            st.markdown('- **Expand date range**: Try a broader time period')
+            st.markdown('- **Reduce filters**: Remove some search criteria')
+            st.markdown('- **Check data availability**: Verify data exists for the selected period')
+            return
+        
+        # Success feedback
+        record_count = len(records)
+        total_dem = summary.get('total_demurrage_usd', 0)
+        st.success(f'✅ Found {record_count:,} records with total demurrage of ${total_dem:,.2f}')
+        
+        st.session_state.summary = summary
         st.session_state.df_raw = ensure_df(records)
 
     if col_clear.button('Clear Filters'):
