@@ -290,23 +290,7 @@ def render_modern_pagination(current_page: int, total_pages: int, page_size: int
         """, unsafe_allow_html=True)
     
     with col3:
-        if st.button("🔄 Go to Page", key="go_to_page_btn", use_container_width=True):
-            target_page = st.session_state.get('jump_to_page', current_page)
-            if 1 <= target_page <= total_pages:
-                st.session_state.current_page = target_page
-                st.rerun()
-    
-    # Jump to page input
-    col_jump1, col_jump2, col_jump3 = st.columns([1, 1, 1])
-    with col_jump2:
-        jump_page = st.number_input(
-            "Jump to page",
-            min_value=1,
-            max_value=total_pages,
-            value=current_page,
-            key="jump_to_page",
-            step=1
-        )
+        st.markdown("")  # Empty space for layout balance
     
     # Calculate the total number of buttons needed
     button_count = 2  # Previous + Next buttons
@@ -402,7 +386,7 @@ def render_records_table(records: list, apply_package_filter: bool = False):
     
     # For large datasets, use modern pagination
     if total_records > 1000:
-        st.info(f"📊 Large dataset detected ({total_records:,} records). Modern pagination enabled for easy navigation.")
+        st.info(f"📊 Total dataset ({total_records:,} records).")
         
         # Get pagination settings
         current_page = st.session_state.get('current_page', 1)
@@ -862,6 +846,7 @@ def demurrage_page():
             package_filter_enabled = st.checkbox(
                 "Enable Package Type Filter",
                 key="package_type_filter_enabled",
+                value=True,  # Enable by default
                 help="When checked, only calculate demurrage based on package type: Containers (0-21 days) and Vehicles in Container (0-60 days)"
             )
         
