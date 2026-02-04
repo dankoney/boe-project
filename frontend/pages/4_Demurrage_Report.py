@@ -246,50 +246,170 @@ def render_summary(summary: Dict[str, Any]):
         st.write(rent_details)
 
 
+def render_modern_pagination(current_page: int, total_pages: int, page_size: int) -> tuple:
+    """Render modern pagination controls and return updated page info"""
+    
+    # Calculate page range to show
+    max_visible = 7  # Number of page buttons to show
+    half_visible = max_visible // 2
+    
+    if total_pages <= max_visible:
+        start_page = 1
+        end_page = total_pages
+    else:
+        if current_page <= half_visible:
+            start_page = 1
+            end_page = max_visible
+        elif current_page >= total_pages - half_visible:
+            start_page = total_pages - max_visible + 1
+            end_page = total_pages
+        else:
+            start_page = current_page - half_visible
+            end_page = current_page + half_visible
+    
+    # Pagination controls container
+    st.markdown("---")
+    
+    # Page size selector and info
+    col1, col2, col3 = st.columns([2, 3, 2])
+    with col1:
+        new_page_size = st.selectbox(
+            "📄 Records per page",
+            options=[50, 100, 200, 500, 1000],
+            index=1,
+            key="page_size_selector",
+            format_func=lambda x: f"{x:,} records"
+        )
+    
+    with col2:
+        st.markdown(f"""
+        <div style='text-align: center; padding: 10px;'>
+            <strong>Page {current_page:,} of {total_pages:,}</strong> | 
+            Total Records: <span style='color: #1E3A8A;'>{st.session_state.get('total_records', 0):,}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        if st.button("🔄 Go to Page", key="go_to_page_btn", use_container_width=True):
+            target_page = st.session_state.get('jump_to_page', current_page)
+            if 1 <= target_page <= total_pages:
+                st.session_state.current_page = target_page
+                st.rerun()
+    
+    # Jump to page input
+    col_jump1, col_jump2, col_jump3 = st.columns([1, 1, 1])
+    with col_jump2:
+        jump_page = st.number_input(
+            "Jump to page",
+            min_value=1,
+            max_value=total_pages,
+            value=current_page,
+            key="jump_to_page",
+            step=1
+        )
+    
+    # Modern pagination buttons
+    st.markdown('<div style="display: flex; justify-content: center; align-items: center; gap: 5px; margin: 20px 0;">', unsafe_allow_html=True)
+    
+    # Navigation buttons container
+    button_cols = st.columns([1] + [1] * (end_page - start_page + 1) + [1])
+    
+    col_idx = 0
+    
+    # Previous button
+    with button_cols[col_idx]:
+        if st.button("⬅️", key="prev_page", disabled=current_page == 1, use_container_width=True):
+            st.session_state.current_page = max(1, current_page - 1)
+            st.rerun()
+    col_idx += 1
+    
+    # First page with ellipsis
+    if start_page > 1:
+        with button_cols[col_idx]:
+            if st.button("1", key="page_1", use_container_width=True):
+                st.session_state.current_page = 1
+                st.rerun()
+        col_idx += 1
+        
+        if start_page > 2:
+            with button_cols[col_idx]:
+                st.markdown('<div style="padding: 8px;">...</div>', unsafe_allow_html=True)
+            col_idx += 1
+    
+    # Page number buttons
+    for page_num in range(start_page, end_page + 1):
+        with button_cols[col_idx]:
+            button_style = "primary" if page_num == current_page else "secondary"
+            if st.button(str(page_num), key=f"page_{page_num}", use_container_width=True, type=button_style):
+                st.session_state.current_page = page_num
+                st.rerun()
+        col_idx += 1
+    
+    # Last page with ellipsis
+    if end_page < total_pages:
+        if end_page < total_pages - 1:
+            with button_cols[col_idx]:
+                st.markdown('<div style="padding: 8px;">...</div>', unsafe_allow_html=True)
+            col_idx += 1
+        
+        with button_cols[col_idx]:
+            if st.button(str(total_pages), key=f"page_{total_pages}", use_container_width=True):
+                st.session_state.current_page = total_pages
+                st.rerun()
+        col_idx += 1
+    
+    # Next button
+    with button_cols[col_idx]:
+        if st.button("➡️", key="next_page", disabled=current_page >= total_pages, use_container_width=True):
+            st.session_state.current_page = min(total_pages, current_page + 1)
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Quick navigation stats
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; padding: 15px; border-radius: 10px; text-align: center; margin: 10px 0;'>
+        <strong>📊 Navigation Stats:</strong> 
+        Showing {((current_page-1)*page_size)+1:,} - {min(current_page*page_size, st.session_state.get('total_records', 0)):,} 
+        of {st.session_state.get('total_records', 0):,} records
+    </div>
+    """, unsafe_allow_html=True)
+    
+    return current_page, new_page_size
+
+
 def render_records_table(records: list, apply_package_filter: bool = False):
     if not records:
         st.warning("No records returned for the selected criteria.")
         return
     
     total_records = len(records)
+    st.session_state.total_records = total_records
     
-    # For large datasets, use pagination
-    if total_records > 10000:
-        st.info(f"📊 Large dataset detected ({total_records:,} records). Use pagination to browse all data.")
+    # For large datasets, use modern pagination
+    if total_records > 1000:
+        st.info(f"📊 Large dataset detected ({total_records:,} records). Modern pagination enabled for easy navigation.")
         
-        # Pagination settings
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            page_size = st.selectbox("Records per page", [100, 500, 1000, 5000], key="page_size")
-        with col2:
-            current_page = st.number_input("Page", min_value=1, value=st.session_state.get('current_page', 1), key="current_page_input")
+        # Get pagination settings
+        current_page = st.session_state.get('current_page', 1)
+        page_size = st.session_state.get('page_size_selector', 100)
         
         total_pages = (total_records + page_size - 1) // page_size
         current_page = min(max(1, current_page), total_pages)
-        st.session_state.current_page = current_page
         
-        # Navigation buttons
-        col_prev, col_info, col_next = st.columns([1, 2, 1])
-        with col_prev:
-            if st.button("⬅️ Previous", disabled=current_page == 1):
-                st.session_state.current_page = current_page - 1
-                st.rerun()
-        with col_info:
-            st.write(f"**Page {current_page} of {total_pages}**")
-        with col_next:
-            if st.button("Next ➡️", disabled=current_page >= total_pages):
-                st.session_state.current_page = current_page + 1
-                st.rerun()
+        # Render modern pagination controls
+        current_page, page_size = render_modern_pagination(current_page, total_pages, page_size)
         
         # Get current page data
         start_idx = (current_page - 1) * page_size
         end_idx = min(start_idx + page_size, total_records)
         page_records = records[start_idx:end_idx]
         
-        st.info(f"Showing records {start_idx + 1:,} to {end_idx:,} of {total_records:,}")
         df = pd.DataFrame(page_records)
     else:
         # Small datasets - show all at once
+        st.info(f"📋 Small dataset ({total_records:,} records). Showing all records.")
         df = pd.DataFrame(records)
     
     # Apply package type filter if requested
@@ -307,28 +427,44 @@ def render_records_table(records: list, apply_package_filter: bool = False):
     ]
     cols = [c for c in display_cols if c in df.columns]
     
-    # Show data table
+    # Show data table with modern styling
     if cols:
         st.dataframe(df[cols], use_container_width=True, hide_index=True)
     else:
         st.dataframe(df, use_container_width=True, hide_index=True)
     
-    # Download full dataset option
-    if total_records > 10000:
+    # Download section
+    if total_records > 1000:
         st.markdown("---")
-        st.subheader("📥 Download Full Dataset")
-        try:
-            full_df = pd.DataFrame(records)
-            csv = full_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label='Download Complete Dataset (CSV)',
-                data=csv,
-                file_name=f'demurrage_report_full_{total_records}_records.csv',
-                mime='text/csv'
-            )
-            del full_df
-        except Exception as e:
-            st.error(f'Download not available: {e}')
+        col_download1, col_download2, col_download3 = st.columns([1, 2, 1])
+        with col_download2:
+            st.markdown("### 📥 Download Options")
+            
+            try:
+                # Full dataset download
+                full_df = pd.DataFrame(records)
+                csv_full = full_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label='📊 Download Complete Dataset (CSV)',
+                    data=csv_full,
+                    file_name=f'demurrage_report_full_{total_records}_records.csv',
+                    mime='text/csv',
+                    use_container_width=True
+                )
+                
+                # Current page download
+                csv_page = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label='📄 Download Current Page (CSV)',
+                    data=csv_page,
+                    file_name=f'demurrage_report_page_{current_page}_{total_pages}.csv',
+                    mime='text/csv',
+                    use_container_width=True
+                )
+                
+                del full_df
+            except Exception as e:
+                st.error(f'Download not available: {e}')
     
     # Memory cleanup
     del df
