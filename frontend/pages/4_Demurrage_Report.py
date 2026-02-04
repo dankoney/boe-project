@@ -288,6 +288,7 @@ def render_modern_pagination(current_page: int, total_pages: int, page_size: int
             Total Records: <span style='color: #1E3A8A;'>{st.session_state.get('total_records', 0):,}</span>
         </div>
         """, unsafe_allow_html=True)
+        
     
     with col3:
         st.markdown("")  # Empty space for layout balance
@@ -699,7 +700,7 @@ def demurrage_page():
     cleaned_selected_periods = []
 
     if 'boe_approval_date' in df_raw.columns and not df_raw.empty:
-        df_dates = pd.to_datetime(df_raw['boe_approval_date'], errors='coerce')
+        df_dates = pd.to_datetime(df_raw['boe_approval_date'], errors='coerce', utc=True)
         df_dates = df_dates.dropna()
         dates = df_dates.dt.date.unique()
         dates = sorted(dates)
@@ -745,23 +746,23 @@ def demurrage_page():
     df_filtered = df_raw.copy()
     if selected_periods:
         if granularity == 'Day':
-            df_filtered = df_filtered[pd.to_datetime(df_filtered['boe_approval_date']).dt.date.isin(selected_periods)]
+            df_filtered = df_filtered[pd.to_datetime(df_filtered['boe_approval_date'], utc=True).dt.date.isin(selected_periods)]
         elif granularity == 'Month':
             selected_month_tuples = [(d.year, d.month) for d in selected_periods]
             df_filtered = df_filtered[
-                pd.to_datetime(df_filtered['boe_approval_date']).apply(
+                pd.to_datetime(df_filtered['boe_approval_date'], utc=True).apply(
                     lambda x: (x.year, x.month) if pd.notnull(x) else None
                 ).isin(selected_month_tuples)
             ]
         elif granularity == 'Quarter':
             selected_q_tuples = [tuple(map(int, q.split('-Q'))) for q in selected_periods]
             df_filtered = df_filtered[
-                pd.to_datetime(df_filtered['boe_approval_date']).apply(
+                pd.to_datetime(df_filtered['boe_approval_date'], utc=True).apply(
                     lambda x: (x.year, (x.month-1)//3 + 1) if pd.notnull(x) else None
                 ).isin(selected_q_tuples)
             ]
         else:  # Year
-            df_filtered = df_filtered[pd.to_datetime(df_filtered['boe_approval_date']).dt.year.isin(selected_periods)]
+            df_filtered = df_filtered[pd.to_datetime(df_filtered['boe_approval_date'], utc=True).dt.year.isin(selected_periods)]
 
     # Apply existing drill-down filters for demurrage
     df_filtered_dem = duration_buckets(df_filtered.copy())
@@ -923,7 +924,7 @@ def demurrage_page():
             st.markdown(f"### Trend Over Time ({granularity})")
             if not df_filtered_dem.empty and 'boe_approval_date' in df_filtered_dem.columns:
                 df_trend = df_filtered_dem.copy()
-                df_trend['date'] = pd.to_datetime(df_trend['boe_approval_date'])
+                df_trend['date'] = pd.to_datetime(df_trend['boe_approval_date'], utc=True)
 
                 if granularity == 'Day':
                     grouped = df_trend.groupby(df_trend['date'].dt.date).agg(
@@ -1307,7 +1308,7 @@ def demurrage_page():
             st.markdown(f"### Rent Trend Over Time ({granularity})")
             if not df_filtered_rent.empty and 'boe_approval_date' in df_filtered_rent.columns:
                 df_trend_r = df_filtered_rent.copy()
-                df_trend_r['date'] = pd.to_datetime(df_trend_r['boe_approval_date'])
+                df_trend_r['date'] = pd.to_datetime(df_trend_r['boe_approval_date'], utc=True)
 
                 if granularity == 'Day':
                     grouped_r = df_trend_r.groupby([df_trend_r['date'].dt.date, 'package_type'])['total_rent_ghc'].sum().reset_index(name='total_value')
